@@ -1,67 +1,148 @@
-<script setup lang="ts">
+<script>
 // This starter template is using Vue 3 <script setup> SFCs
 // Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-import HelloWorld from "./components/HelloWorld.vue";
+// import HelloWorld from "./components/HelloWorld.vue";
+import FileInput from "./components/FileInput.vue";
+import Button from "./components/Button.vue";
+import FilesList from "./components/FilesList.vue";
 import PID from "./components/PID.vue";
+import axios, { AxiosResponse } from "axios";
+
+export default {
+    components: {
+        FilesList,
+        PID,
+        FileInput,
+        Button,
+    },
+    data: () => ({
+        items: [],
+        file: null,
+    }),
+    methods: {
+        async getFiles() {
+            try {
+                const response = await axios.get("http://127.0.0.1:4242/");
+                if (response.status == 200) {
+                    let listItems = [];
+                    for (let i = 0; i < response.data.length; i++) {
+                        let listItem = { label: response.data[i].name };
+                        listItems.push(listItem);
+                    }
+                    this.items = listItems;
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        onFormSuccess() {
+            this.loading = true;
+
+            const URL = "http://localhost:4242/upload_file";
+            const req_data = {
+                filename: this.file.name,
+            };
+            console.log("file: ", req_data.file);
+            console.log("req_data: ", req_data);
+
+            axios
+                .post(URL, req_data, {
+                    headers: { "Content-Type": "application/json" },
+                })
+                .then((response) => {
+                    if (response.status == 200) {
+                        this.getFiles();
+                        console.log("data: ", response.data);
+                        this.loading = false;
+                    }
+                })
+                .catch((error) => console.log(error));
+        },
+    },
+    mounted() {
+        this.getFiles();
+    },
+};
 </script>
 
 <template>
-  <div class="logo-box">
-    <img class="logo vite" src="./assets/vite.svg" />
-    <img class="logo electron" src="./assets/electron.svg" />
-    <img class="logo vue" src="./assets/vue.svg" />
-    <img class="logo fastapi" src="./assets/fastapi.svg" />
-  </div>
-  <HelloWorld msg="Hello Vue 3 + TypeScript + Vite + FastAPI" />
-  <PID />
+    <div class="logo-box">
+        <img class="logo vite" src="./assets/vite.svg" />
+        <img class="logo electron" src="./assets/electron.svg" />
+        <img class="logo vue" src="./assets/vue.svg" />
+        <img class="logo fastapi" src="./assets/fastapi.svg" />
+    </div>
+    <w-flex wrap class="text-center">
+        <div class="lg3 md3 sm3 xs12 pa1">
+            <w-form @success="onFormSuccess" class="d-flex mb4" wrap>
+                <FileInput v-model="file" class="lg9 md9 sm9 xs12 pa1" />
+                <w-button
+                    type="submit"
+                    :loading="loading"
+                    class="mla mt4 lg3 md3 sm3 xs12 pa1"
+                    bg-color="primary"
+                    >Add</w-button
+                >
+            </w-form>
+            <f3>Files</f3>
+            <Button :type="button" class="d-flex mla" bg-color="error"
+                >Delete Files</Button
+            >
+            <FilesList :items="items" />
+        </div>
+        <div class="lg9 md9 sm9 xs12 pa1">
+            <div class="primary-light1--bg white py3">xs9</div>
+        </div>
+    </w-flex>
+    <PID />
 </template>
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+    font-family: Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    color: #2c3e50;
+    margin-top: 60px;
 }
 
 .logo-box {
-  display: flex;
-  width: 100%;
-  justify-content: center;
+    display: flex;
+    width: 100%;
+    justify-content: center;
 }
 
 .static-public {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .static-public code {
-  background-color: #eee;
-  padding: 2px 4px;
-  margin: 0 4px;
-  border-radius: 4px;
-  color: #304455;
+    background-color: #eee;
+    padding: 2px 4px;
+    margin: 0 4px;
+    border-radius: 4px;
+    color: #304455;
 }
 
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
+    height: 4em;
+    padding: 1.5em;
+    will-change: filter;
+    transition: 0.75s;
 }
 
 .logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
+    filter: drop-shadow(0 0 2em #747bff);
 }
 
 .logo.electron:hover {
-  filter: drop-shadow(0 0 2em #9feaf9);
+    filter: drop-shadow(0 0 2em #9feaf9);
 }
 
 .logo.vue:hover {
-  filter: drop-shadow(0 0 2em #249b73);
+    filter: drop-shadow(0 0 2em #249b73);
 }
 </style>

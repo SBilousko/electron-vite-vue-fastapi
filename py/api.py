@@ -1,6 +1,9 @@
 from typing import Union
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from sqlalchemy import select
+from db_model import *
 
 import uvicorn
 import sys
@@ -31,6 +34,13 @@ def setPort():
         print("error with sys.argv, assigned default port: 4242")   
     return p
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 app = FastAPI()
 port = setPort()
 
@@ -42,16 +52,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def read_root(db: Session = Depends(get_db)):
+    # return 
+    files = db.query(File).all()
+    return files
 
 
 @app.get("/pid")
 def read_root():
     return {"pid": str(os.getpid())}
 
+@app.post("/upload_file")
+def read_root(data = Body(), db: Session = Depends(get_db)):
+    file = File(
+        name = data["filename"]
+    )
+    db.add(file)
+    db.commit()
+    return file["name"]
+
 if __name__ == "__main__":
+    # with Session(engine) as db:
+    #     statement = select(File.name)
+    #     print(db.execute(statement).all())
     uvicorn.run(app, host='127.0.0.1', port=port)
