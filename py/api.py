@@ -46,7 +46,7 @@ port = setPort()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -63,7 +63,7 @@ def read_root(db: Session = Depends(get_db)):
 def read_root():
     return {"pid": str(os.getpid())}
 
-@app.post("/upload_file")
+@app.post("/upload/")
 def read_root(data = Body(), db: Session = Depends(get_db)):
     file = File(
         name = data["filename"]
@@ -71,6 +71,14 @@ def read_root(data = Body(), db: Session = Depends(get_db)):
     db.add(file)
     db.commit()
     return file["name"]
+
+@app.delete("/delete/")
+def delete_files(db: Session = Depends(get_db)):
+    # Base.metadata.drop_all(engine)
+    # Base.metadata.create_all(bind = engine)
+    db.execute('''TRUNCATE TABLE files''')
+    db.commit()
+    return {"Files deleted"}
 
 if __name__ == "__main__":
     # with Session(engine) as db:

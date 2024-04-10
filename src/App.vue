@@ -17,7 +17,7 @@ export default {
     },
     data: () => ({
         items: [],
-        file: null,
+        files: null,
     }),
     methods: {
         async getFiles() {
@@ -35,20 +35,23 @@ export default {
                 console.error(error);
             }
         },
-        onFormSuccess() {
+        async onFormSuccess() {
             this.loading = true;
+            let headers = new Headers();
+            headers.append("Content-Type", "application/json");
+            headers.append("Accept", "application/json");
+            headers.append("GET", "POST", "OPTIONS");
 
-            const URL = "http://localhost:4242/upload_file";
-            const req_data = {
-                filename: this.file.name,
+            console.log("files: ", this.files);
+            const URL = "http://localhost:4242/upload/";
+            let req_data = {
+                filename: this.files.name,
             };
-            console.log("file: ", req_data.file);
+            console.log("file: ", req_data.filename);
             console.log("req_data: ", req_data);
 
-            axios
-                .post(URL, req_data, {
-                    headers: { "Content-Type": "application/json" },
-                })
+            await axios
+                .post(URL, req_data, headers)
                 .then((response) => {
                     if (response.status == 200) {
                         this.getFiles();
@@ -57,6 +60,14 @@ export default {
                     }
                 })
                 .catch((error) => console.log(error));
+        },
+        async deleteFiles() {
+            let headers = new Headers();
+            headers.append("Content-Type", "application/json");
+            const URL = "http://localhost:4242/delete/";
+            await axios.delete(URL, headers).then((response) => {
+                console.log(response);
+            });
         },
     },
     mounted() {
@@ -72,10 +83,10 @@ export default {
         <img class="logo vue" src="./assets/vue.svg" />
         <img class="logo fastapi" src="./assets/fastapi.svg" />
     </div>
-    <w-flex wrap class="text-center">
+    <w-flex wrap class="text-center pa10">
         <div class="lg3 md3 sm3 xs12 pa1">
             <w-form @success="onFormSuccess" class="d-flex mb4" wrap>
-                <FileInput v-model="file" class="lg9 md9 sm9 xs12 pa1" />
+                <FileInput v-model="files" class="lg9 md9 sm9 xs12 pa1" />
                 <w-button
                     type="submit"
                     :loading="loading"
@@ -85,7 +96,11 @@ export default {
                 >
             </w-form>
             <f3>Files</f3>
-            <Button :type="button" class="d-flex mla" bg-color="error"
+            <Button
+                :type="button"
+                @click="deleteFiles"
+                class="d-flex mla"
+                bg-color="error"
                 >Delete Files</Button
             >
             <FilesList :items="items" />
